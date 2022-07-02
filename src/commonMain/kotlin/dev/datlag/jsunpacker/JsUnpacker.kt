@@ -37,7 +37,7 @@ object JsUnpacker {
     /**
      * Check if scripts are packed.
      *
-     * @param scriptBlock (multiple) String(s) to check f it is packed.
+     * @param scriptBlock (multiple) String(s) to check if it is packed.
      *
      * @return the packed scripts passed in [scriptBlock].
      */
@@ -52,6 +52,17 @@ object JsUnpacker {
     }
 
     /**
+     * Check if scripts are packed.
+     *
+     * @param scriptBlocks multiple Strings to check if it is packed.
+     *
+     * @return the packed scripts passed in [scriptBlocks].
+     */
+    fun detect(scriptBlocks: Collection<String>): List<String> {
+        return detect(*scriptBlocks.toTypedArray())
+    }
+
+    /**
      * Unpack the passed [scriptBlock].
      * It matches all found occurrences and returns them as separate Strings in a list.
      *
@@ -59,9 +70,9 @@ object JsUnpacker {
      *
      * @return unpacked code in a list or an empty list if non is packed.
      */
-    fun unpack(scriptBlock: String): List<String> {
+    fun unpack(scriptBlock: String): Sequence<String> {
         return if (!detect(scriptBlock)) {
-            emptyList()
+            emptySequence()
         } else {
             unpacking(scriptBlock)
         }
@@ -77,7 +88,7 @@ object JsUnpacker {
      */
     fun unpackAndCombine(scriptBlock: String): String? {
         val unpacked = unpack(scriptBlock)
-        return if (unpacked.isEmpty()) {
+        return if (unpacked.toList().isEmpty()) {
             null
         } else {
             unpacked.joinToString(" ")
@@ -100,6 +111,18 @@ object JsUnpacker {
     }
 
     /**
+     * Unpack the passed [scriptBlocks].
+     * It matches all found occurrences and returns them as separate Strings in a list.
+     *
+     * @param scriptBlocks multiple Strings to unpack.
+     *
+     * @return unpacked code in a flat list or an empty list if non is packed.
+     */
+    fun unpack(scriptBlocks: Collection<String>): List<String> {
+        return unpack(*scriptBlocks.toTypedArray())
+    }
+
+    /**
      * Unpacking functionality.
      * Match all found occurrences, get the information group and unbase it.
      * If found symtabs are more or less than the count provided in code, the occurrence will be ignored
@@ -109,8 +132,9 @@ object JsUnpacker {
      *
      * @return a list of all unpacked code from all found packed and unpackable occurrences found.
      */
-    private fun unpacking(scriptBlock: String): List<String> {
-        return packedExtractRegex.findAll(scriptBlock).mapNotNull { result ->
+    private fun unpacking(scriptBlock: String): Sequence<String> {
+        val unpacked = packedExtractRegex.findAll(scriptBlock).mapNotNull { result ->
+
             val payload = result.groups[1]?.value
             val symtab = result.groups[4]?.value?.split('|')
             val radix = result.groups[2]?.value?.toIntOrNull() ?: 10
@@ -128,7 +152,8 @@ object JsUnpacker {
                     }
                 }
             }
-        }.toList()
+        }
+        return unpacked
     }
 
 }

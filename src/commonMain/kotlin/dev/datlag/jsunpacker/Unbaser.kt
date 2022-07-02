@@ -14,14 +14,14 @@ internal data class Unbaser(
 
     fun unbase(value: String): Int {
         return if (base in 2..36) {
-            value.toIntOrNull() ?: 0
+            value.toIntOrNull(base) ?: 0
         } else {
             val dict = ALPHABET[selector]?.toCharArray()?.mapIndexed { index, c ->
                 c to index
             }?.toMap()
             var returnVal = 0
-            val valArray = value.toCharArray().reversed()
 
+            val valArray = value.toCharArray().reversed()
             for (i in valArray.indices) {
                 val cipher = valArray[i]
                 returnVal += (base.toFloat().pow(i) * (dict?.get(cipher) ?: 0)).toInt()

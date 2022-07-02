@@ -5,6 +5,15 @@ plugins {
 group = "dev.datlag.jsunpacker"
 version = "1.0.0"
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.vanniktech:gradle-maven-publish-plugin:0.20.0")
+    }
+}
+
 repositories {
     mavenCentral()
 }
@@ -51,3 +60,5 @@ kotlin {
         val nativeTest by getting
     }
 }
+
+apply(plugin = "com.vanniktech.maven.publish")
