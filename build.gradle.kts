@@ -1,18 +1,17 @@
+import com.vanniktech.maven.publish.SonatypeHost
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
-    kotlin("multiplatform") version "1.7.0"
+    kotlin("multiplatform") version "1.9.20"
+    `maven-publish`
+    signing
+    id("com.vanniktech.maven.publish") version "0.25.3"
 }
 
+val libName = "jsunpacker"
+val libVersion = "1.0.2"
 group = "dev.datlag.jsunpacker"
-version = "1.0.1"
-
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("com.vanniktech:gradle-maven-publish-plugin:0.20.0")
-    }
-}
+version = libVersion
 
 repositories {
     mavenCentral()
@@ -20,30 +19,33 @@ repositories {
 
 kotlin {
     jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
-        }
         withJava()
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
     }
-    js(BOTH) {
-        browser {
-            commonWebpackConfig {
-                cssSupport.enabled = true
-            }
-        }
+    js(IR) {
+        browser()
+        nodejs()
+        binaries.executable()
     }
-    val hostOs = System.getProperty("os.name")
-    val isMingwX64 = hostOs.startsWith("Windows")
-    val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosX64("native")
-        hostOs == "Linux" -> linuxX64("native")
-        isMingwX64 -> mingwX64("native")
-        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-    }
+    macosX64()
+    macosArm64()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    linuxX64()
+    linuxArm64()
+    mingwX64()
+    watchosArm64()
+    watchosArm32()
+    watchosSimulatorArm64()
+    watchosDeviceArm64()
+    tvosX64()
+    tvosArm64()
+    tvosSimulatorArm64()
 
+    applyDefaultHierarchyTemplate()
     
     sourceSets {
         val commonMain by getting
@@ -52,13 +54,46 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
-        val jvmMain by getting
-        val jvmTest by getting
-        val jsMain by getting
-        val jsTest by getting
-        val nativeMain by getting
-        val nativeTest by getting
     }
 }
 
-apply(plugin = "com.vanniktech.maven.publish")
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_17.toString()
+}
+
+mavenPublishing {
+    publishToMavenCentral(host = SonatypeHost.S01, automaticRelease = true)
+    signAllPublications()
+
+    coordinates(
+        groupId = "dev.datlag.jsunpacker",
+        artifactId = libName,
+        version = libVersion
+    )
+
+    pom {
+        name.set(libName)
+        description.set("A javascript unpacker written in Kotlin, available for all platforms")
+        url.set("https://github.com/DatL4g/JsUnpacker")
+
+        licenses {
+            license {
+                name.set("Apache License 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+
+        scm {
+            url.set("https://github.com/DatL4g/JsUnpacker")
+            connection.set("scm:git:git://github.com/DatL4g/JsUnpacker.git")
+        }
+
+        developers {
+            developer {
+                id.set("DatL4g")
+                name.set("Jeff Retz (DatLag)")
+                url.set("https://github.com/DatL4g")
+            }
+        }
+    }
+}
